@@ -1,8 +1,8 @@
-main = solution . map sum . windowed 3 <$> parseProblem
+main = parseProblem >>= print . solution . map sum . windowed 3
 
-zipNext l = zip l (tail l)
+zipWithNext f l = zipWith f l (tail l)
 
-solution = length . filter (uncurry (<)) . zipNext
+solution = length . filter id . zipWithNext (<)
 
 windowed size xs = scanl (\window x -> (tail window) ++ [x]) (take size xs) (drop size xs)
 
