@@ -18,12 +18,3 @@ applyCommand (State (x, y) aim) (Forward amount) = State (x + amount, y + aim * 
 
 finalRes (State (x, y) _) = x * y
 
-
-
-
-
-
-
-
-
-
