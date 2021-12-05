@@ -29,7 +29,6 @@ mark' num [] comps board = (comps, board)
 mark' num ((pos, v):xs) comps board | num == v = (pos: comps, board ++ xs)
 mark' num (x@(pos, v):xs) comps board = mark' num xs comps (x:board)
 
-
 completed comps = any (==5) (rows ++ cols)
     where foldfn (rows, cols) (i, j) = (updateList j (+1) rows, updateList i (+1) cols)
           (rows, cols) = foldl foldfn (init, init) comps
