@@ -1,5 +1,3 @@
-import numpy as np
-
 file = open("input.txt")
 contents = file.read().strip()
 file.close()
@@ -46,12 +44,8 @@ for start, end in res:
     dx, dy = x2 - x1, y2 - y1
     sx, sy = sign(dx), sign(dy)
     if abs(dx) == abs(dy):
-        print((x1, y1), (x2, y2), (dx, dy))
         for i in range(abs(dx) + 1):
-            print(y1 + i * sy, x1 + i * sx)
             mmap[y1 + i * sy][x1 + i * sx] += 1
-
-print(np.array(mmap))
 
 count = 0
 for row in mmap:
