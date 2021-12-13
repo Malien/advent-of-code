@@ -21,6 +21,7 @@ def dfs(i, j):
     return 1 + dfs(i-1, j) + dfs(i+1, j) + dfs(i, j-1) + dfs(i, j+1)
 
 
+c = 0
 sizes = []
 for i, row in enumerate(inp):
     for j, cell in enumerate(row):
@@ -32,7 +33,6 @@ for i, row in enumerate(inp):
             continue
         if j < len(row) - 1 and cell >= inp[i][j+1]:
             continue
-        print(i, j, cell)
         sizes.append(dfs(i, j))
 
 sizes.sort()
