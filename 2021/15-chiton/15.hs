@@ -9,7 +9,7 @@ import qualified Data.PQueue.Min as PQueue
 import qualified Data.Set as Set
 import Data.Set (Set)
 
-main = readFile "input.txt" >>= print . solution
+main = readFile "input.a64nrpt.txt" >>= print . solution
 
 solution str = Main.traverse grid end (PQueue.singleton startingPath) Set.empty
     where grid = parseGrid str
