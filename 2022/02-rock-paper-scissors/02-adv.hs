@@ -1,5 +1,3 @@
-import           Data.List.Split
-
 main = process <$> readFile "in" >>= print
 
 data Play = Rock | Paper | Scissors deriving Eq
@@ -30,9 +28,9 @@ decide Lose Paper    = Rock
 decide Lose Scissors = Paper
 decide Lose Rock     = Scissors
 
-parse inp = (parsePlay enemyPlay, parseOutcome desiredOutcome)
-  where [enemyPlay, desiredOutcome] = splitOn " " inp
+parseLine line = (parsePlay enemyPlay, parseOutcome desiredOutcome)
+  where [enemyPlay, desiredOutcome] = words line
 
 score enemyPlay outcome = stateScore outcome + playScore (decide outcome enemyPlay)
 
-process = sum . map (uncurry score . parse) . lines
+process = sum . map (uncurry score . parseLine) . lines
