@@ -1,6 +1,4 @@
-import           Data.List
 import           Data.List.Split
-import           Data.Ord
 
 main = process <$> readFile "in" >>= print
 
