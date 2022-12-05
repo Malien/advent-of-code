@@ -57,8 +57,8 @@ for _, buf in ipairs(vim.api.nvim_list_bufs()) do
   end
 end
 
-if is_haskell(0) then
-  vim.cmd "bo vs term://zsh"
-end
-
--- pprint(vim.api.nvim_list_chans())
+vim.defer_fn(function ()
+  if is_haskell(0) then
+    vim.cmd "bo vs term://$SHELL"
+  end
+end, 200)
