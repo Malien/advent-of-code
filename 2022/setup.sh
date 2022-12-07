@@ -14,6 +14,10 @@ cp ../.nvimrc.lua .
 
 echo "import           Data.List" > $DIRNAME.hs
 echo "import           Data.List.Split" > $DIRNAME.hs
+echo "import           Data.Maybe" >> $DIRNAME.hs
+echo "import           Debug.Trace" >> $DIRNAME.hs
+echo "import           Text.Regex.PCRE" >> $DIRNAME.hs
+echo "import qualified Data.Array      as Array" >> $DIRNAME.hs
 echo "import           Data.Map        (Map)" >> $DIRNAME.hs
 echo "import qualified Data.Map        as Map" >> $DIRNAME.hs
 echo "import           Data.Set        (Set)" >> $DIRNAME.hs
