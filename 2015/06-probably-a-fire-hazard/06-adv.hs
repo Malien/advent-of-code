@@ -1,7 +1,5 @@
 import           Data.List
-import           Data.List.Split
 import           Text.Regex.PCRE
--- import Data.Array
 import           Control.Monad
 import           Control.Monad.ST
 import           Data.Array.MArray
@@ -24,10 +22,10 @@ parse line = (action line, (xa, xb), (ya, yb))
 
 indecies (ax, ay) (bx, by) = [(x, y) | x <- [ax .. bx], y <- [ay .. by]]
 
-applySingle TurnOn x = x + 1
+applySingle TurnOn  x = x + 1
 applySingle TurnOff 0 = 0
 applySingle TurnOff x = x - 1
-applySingle Toggle x = x + 2
+applySingle Toggle  x = x + 2
 
 apply arr (action, start, end) =
   forM_ (indecies start end) (\index -> do

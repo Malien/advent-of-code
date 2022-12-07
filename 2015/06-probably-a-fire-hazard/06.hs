@@ -1,5 +1,4 @@
 import           Data.List
-import           Data.List.Split
 import           Text.Regex.PCRE
 import           Control.Monad
 import           Control.Monad.ST
