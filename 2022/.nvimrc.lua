@@ -17,23 +17,28 @@ local function reeval_on_write(opts)
     group = augroup,
     buffer = opts.buffer,
     callback = function()
-      vim.api.nvim_chan_send(opts.channel, ":r\nprocess test\n")
+      local name = vim.api.nvim_buf_get_name(opts.buffer)
+      vim.api.nvim_chan_send(opts.channel, ":l " .. name .. "\nprocess test\n")
     end,
   })
   print "Attached BufWrite handler to re-evaluated expression 'process test'"
 end
 
 local function attach_ghci_command(buf)
-  local name = vim.api.nvim_buf_get_name(buf)
   vim.api.nvim_buf_create_user_command(buf, "Ghci", function()
+    local name = vim.api.nvim_buf_get_name(buf)
     local existing_chan = find_terminal_chan_in_tab()
     if not existing_chan then
       print "We have to create a new window with terminal"
-    elseif #existing_chan.argv > 2 and existing_chan.argv[3] == ("ghci " .. name) then
-      reeval_on_write { buffer = buf, channel = existing_chan.id }
     else
-      vim.api.nvim_chan_send(existing_chan.id, "ghci " .. name .. "\n")
-      reeval_on_write { buffer = buf, channel = existing_chan.id }
+      local new_term_buf = vim.api.nvim_create_buf(false, false)
+      vim.api.nvim_win_set_buf(existing_chan.window, new_term_buf)
+      vim.api.nvim_buf_call(new_term_buf, function()
+        vim.fn.termopen("$SHELL -c ghci " .. name)
+      end)
+      local new_term_channel = vim.api.nvim_buf_get_option(new_term_buf, "channel")
+      vim.api.nvim_buf_delete(existing_chan.buffer, { force = true })
+      reeval_on_write { buffer = buf, channel = new_term_channel }
     end
   end, {})
 end
@@ -57,7 +62,7 @@ for _, buf in ipairs(vim.api.nvim_list_bufs()) do
   end
 end
 
-vim.defer_fn(function ()
+vim.defer_fn(function()
   if is_haskell(0) then
     vim.cmd "bo vs term://$SHELL"
   end
