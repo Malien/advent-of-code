@@ -35,7 +35,7 @@ process =
   . map moves
   . lines
 
-moves line = (parseDirection direction, read count :: Int)
+moves line = (parseDirection direction, read count)
   where [direction, count] = words line
 
 data Direction = Up | Down | Left | Right
@@ -52,25 +52,6 @@ data Rope = Rope { rHead :: Pos, knots :: [Pos], visited :: Set Pos }
 
 startingPoint = Rope { rHead = (0, 0), knots = take 9 $ repeat (0,0), visited = Set.singleton (0,0) }
 
-adjacent (ax, ay) (bx, by) = dx <= 1 && dy <= 1
-  where dx = abs (ax - bx)
-        dy = abs (ay - by)
-
-movePoint (x, y) Right = (x + 1, y)
-movePoint (x, y) Left  = (x - 1, y)
-movePoint (x, y) Up    = (x, y + 1)
-movePoint (x, y) Down  = (x, y - 1)
-
-neighbors = [(x, y) | x <- [-1, 0, 1], y <- [-1, 0, 1]]
-
-distance (ax, ay) (bx, by) = abs (ax - bx) + abs (ay - by)
-
-applyDiff (x, y) (dx, dy) = (x + dx, y + dy)
-
-moveKnot knotHead knot
-  | adjacent knotHead knot = knot
-  | otherwise              = minimumBy (comparing $ distance knotHead) $ map (applyDiff knot) neighbors
-
 -- moveKnot (headX, headY) (knotX, knotY)
 --   | headX - knotX >=  2 = (headX - 1, headY)
 --   | headY - knotY >=  2 = (headX, headY - 1)
@@ -79,13 +60,32 @@ moveKnot knotHead knot
 --   | otherwise           = (knotX, knotY)
 
 advance (Rope { rHead, knots, visited }) direction = Rope
-  { rHead = moved
-  , knots = newKnots
+  { rHead   = newHead
+  , knots   = newKnots
   , visited = Set.insert (last newKnots) visited
   }
-  where newKnots = advanceKnots (moved : knots)
-        moved    = movePoint rHead direction
+  where newHead  = movePoint rHead direction
+        newKnots = advanceKnots (newHead : knots)
 
-advanceKnots [prev,current] = [moveKnot prev current]
+movePoint (x, y) Right = (x + 1, y)
+movePoint (x, y) Left  = (x - 1, y)
+movePoint (x, y) Up    = (x, y + 1)
+movePoint (x, y) Down  = (x, y - 1)
+
 advanceKnots (prev:current:rest) = moved : (advanceKnots (moved : rest))
   where moved = moveKnot prev current
+advanceKnots _ = []
+
+moveKnot knotHead knot
+  | adjacent knotHead knot = knot
+  | otherwise              = minimumBy (comparing $ distance knotHead) $ map (applyDiff knot) neighbors
+
+adjacent (ax, ay) (bx, by) = dx <= 1 && dy <= 1
+  where dx = abs (ax - bx)
+        dy = abs (ay - by)
+
+neighbors = [(x, y) | x <- [-1, 0, 1], y <- [-1, 0, 1]]
+
+distance (ax, ay) (bx, by) = abs (ax - bx) + abs (ay - by)
+
+applyDiff (x, y) (dx, dy) = (x + dx, y + dy)
