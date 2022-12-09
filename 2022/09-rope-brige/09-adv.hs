@@ -27,8 +27,6 @@ test2 =
   \L 25\n\
   \U 20"
 
-toCsvRow (x, y) = show x ++ "," ++ show y ++ "\n"
-
 process =
     Set.size
   . visited
@@ -37,21 +35,22 @@ process =
   . map moves
   . lines
 
-startingPoint = Rope { rHead = (0, 0), knots = take 9 $ repeat (0,0), visited = Set.singleton (0,0) }
-
 moves line = (parseDirection direction, read count :: Int)
   where [direction, count] = words line
 
-repeatMoves (move, count) = take count $ repeat move
-
-type Pos = (Int, Int)
-data Rope = Rope { rHead :: Pos, knots :: [Pos], visited :: Set Pos }
 data Direction = Up | Down | Left | Right
 
 parseDirection "R" = Right
 parseDirection "L" = Left
 parseDirection "U" = Up
 parseDirection "D" = Down
+
+repeatMoves (move, count) = take count $ repeat move
+
+type Pos = (Int, Int)
+data Rope = Rope { rHead :: Pos, knots :: [Pos], visited :: Set Pos }
+
+startingPoint = Rope { rHead = (0, 0), knots = take 9 $ repeat (0,0), visited = Set.singleton (0,0) }
 
 adjacent (ax, ay) (bx, by) = dx <= 1 && dy <= 1
   where dx = abs (ax - bx)
