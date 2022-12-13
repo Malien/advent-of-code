@@ -13,12 +13,17 @@ end
 local augroup = vim.api.nvim_create_augroup("AdventOfCode", { clear = true })
 
 local function reeval_on_write(opts)
-  vim.api.nvim_create_autocmd("BufWritePost", {
+  local autocmd_id
+  autocmd_id = vim.api.nvim_create_autocmd("BufWritePost", {
     group = augroup,
     buffer = opts.buffer,
     callback = function()
       local name = vim.api.nvim_buf_get_name(opts.buffer)
-      vim.api.nvim_chan_send(opts.channel, ":l " .. name .. "\nprocess test\n")
+      local ok, res = pcall(vim.api.nvim_chan_send, opts.channel, ":l " .. name .. "\nprocess test\n")
+      if not ok then
+        print("Turning off ghci reevaluation: " .. res)
+        vim.api.nvim_del_autocmd(autocmd_id)
+      end
     end,
   })
   print "Attached BufWrite handler to re-evaluated expression 'process test'"

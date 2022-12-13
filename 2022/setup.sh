@@ -25,7 +25,7 @@ echo "import qualified Data.Map        as Map" >> $DIRNAME.hs
 echo "import           Data.Set        (Set)" >> $DIRNAME.hs
 echo "import qualified Data.Set        as Set" >> $DIRNAME.hs
 echo "" >> $DIRNAME.hs
-echo 'main = process <$> readFile "in" >>= print' >> $DIRNAME.hs
+echo 'main = readFile "in" >>= print . process' >> $DIRNAME.hs
 echo '' >> $DIRNAME.hs
 echo 'test = ""' >> $DIRNAME.hs
 echo '' >> $DIRNAME.hs
