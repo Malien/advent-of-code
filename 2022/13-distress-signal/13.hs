@@ -44,7 +44,7 @@ parsePacket inp = packet
           where (item, left) = parsePacket' [] rest
         parsePacket' acc (',':rest) = parsePacket' acc rest
         parsePacket' acc line       = parsePacket' newAcc afterNumber
-          where afterNumber = dropWhile isDigit line
+          where afterNumber  = dropWhile isDigit line
                 beforeNumber = takeWhile isDigit line
                 newAcc = Item (read $ takeWhile isDigit line) : acc
 

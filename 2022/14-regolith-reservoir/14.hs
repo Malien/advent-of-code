@@ -6,13 +6,16 @@ import qualified Data.Set        as Set
 
 main = readFile "in" >>= print . process
 
-process inp = length $ simulations grid
-  where grid = foldr (flip drawShape) Set.empty . map parseShape . lines $ inp
+process = 
+    length 
+  . simulations
+  . foldr (flip drawShape) Set.empty 
+  . map parseShape 
+  . lines
 
 parseShape = map parseCoord . splitOn " -> "
 
-simulations grid = iterateMaybe (simulateSand cutoff (500, 0)) grid
-  where cutoff = abyssLine grid
+simulations grid = iterateMaybe (simulateSand (abyssLine grid) (500, 0)) grid
 
 iterateMaybe f = unfoldr (fmap (\s -> (s,s)) . f)
 
@@ -25,7 +28,7 @@ simulateSand cutoff (x,y) grid
   | not (Set.member (x+1, y+1) grid) = simulateSand cutoff (x+1, y+1) grid
   | otherwise = Just $ Set.insert (x,y) grid
 
-parseCoord line = (read x, read y) :: (Int, Int)
+parseCoord line = (read x, read y)
   where [x,y] = splitOn "," line
 
 drawShape grid shape = foldl (uncurry . drawLine) grid $ zip shape (tail shape)
