@@ -12,7 +12,7 @@ chmod +x download.sh
 
 cp ../.nvimrc.lua .
 
-echo << EOF
+echo "\
 import           Data.List
 import           Data.List.Split
 import           Data.Ord
@@ -26,9 +26,9 @@ import qualified Data.Map        as Map
 import           Data.Set        (Set)
 import qualified Data.Set        as Set
 
-main = readFile "in" >>= print . process
+main = readFile \"in\" >>= print . process
 
-test = ""
+test = \"\"
 
 process = lines
-EOF > $DIRNAME.hs
+" > $DIRNAME.hs
