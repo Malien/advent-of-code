@@ -4,7 +4,7 @@ import           Data.Map   (Map)
 import qualified Data.Map   as Map
 import           Data.Maybe (fromJust)
 
-main = process <$> readFile "in" >>= print
+main = process <$> readFile "day7.txt" >>= print
 
 test =
   "$ cd /\n\
@@ -42,15 +42,15 @@ process =
 
 data File = File String Int deriving Show
 
-data FsItem = FsFile File | Dir String 
+data FsItem = FsFile File | Dir String
 
-data Command 
-  = CdUp 
-  | Cd String 
-  | Ls [FsItem] 
+data Command
+  = CdUp
+  | Cd String
+  | Ls [FsItem]
 
-data Fs = Fs { 
-  files :: [File], 
+data Fs = Fs {
+  files :: [File],
   dirs :: Map String (Maybe Fs)
   }
 

@@ -4,7 +4,7 @@ import           Data.Map   (Map)
 import qualified Data.Map   as Map
 import           Data.Maybe (fromJust)
 
-main = process <$> readFile "in" >>= print
+main = readFile "day7.txt" >>= print . process
 
 test =
   "$ cd /\n\
@@ -57,16 +57,14 @@ data Fs = Fs {
 
 parseCommands [] = []
 parseCommands ("$ ls"   :rest) = Ls (map parseFs output) : parseCommands left
-  where (output, left) = splitWhere (isPrefixOf "$ ") rest
+  where (output, left) = break (isPrefixOf "$ ") rest
 parseCommands ("$ cd ..":rest) = CdUp : parseCommands rest
-parseCommands (cmd:rest) | isPrefixOf "$ cd " cmd = Cd (drop 5 cmd) : parseCommands rest
+parseCommands (cmd:rest) | "$ cd " `isPrefixOf` cmd = Cd (drop 5 cmd) : parseCommands rest
 
 parseFs line = case first of
     "dir" -> Dir name
     size  -> FsFile $ File name (read size)
   where [first, name] = words line
-
-splitWhere f xs = (takeWhile (not . f) xs, dropWhile (not . f) xs)
 
 populate = snd . foldl populate' ([], emptyFs)
   where populate' (path, fs) (Cd dir)   = (path ++ [dir], fs                               )
@@ -86,7 +84,7 @@ insertIn (x:xs) item (Fs { dirs, files }) = Fs {
   dirs = Map.update (Just . Just . insertIn xs item . fromJust) x dirs
   }
 
-allRoots (fs@Fs { dirs }) = fs : (concatMap (allRoots . fromJust) . Map.elems $ dirs)
+allRoots fs@Fs { dirs } = fs : (concatMap (allRoots . fromJust) . Map.elems $ dirs)
 
 dirSize (Fs { files, dirs }) = sum (map fileSize files) + sum (map (dirSize . fromJust) $ Map.elems dirs)
 
