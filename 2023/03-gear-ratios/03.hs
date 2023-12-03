@@ -1,15 +1,12 @@
 {-# LANGUAGE NamedFieldPuns #-}
-import           Data.Array
-import           Data.Char
-import           Data.List
-import           Data.List.Split
-import           Data.Map        (Map)
+import           Data.Array      (Ix, array, bounds, elems, listArray, (//))
+import           Data.Char       (isDigit)
+import           Data.List.Split (chunksOf)
+import           Data.Map        (Map, (!), (!?))
 import qualified Data.Map        as Map
-import           Data.Maybe
-import           Data.Ord
+import           Data.Maybe      (mapMaybe)
 import           Data.Set        (Set)
 import qualified Data.Set        as Set
-import           Debug.Trace
 
 main = readFile "in" >>= print . process
 
@@ -25,10 +22,13 @@ test = "\
 \...$.*....\n\
 \.664.598.."
 
-process input = sum $ map (groupToNum Map.!) $  Set.toList $ accumGroups association symbolsAt
+process input =
+    sum
+  $ map (groupToNum !)
+  $ neighbouringGroups association symbolsAt
   where State { association, symbolsAt, groupToNum } = divideIntoGroups emptyState input
 
-display = putStrLn . displayGrid . divideIntoGroups emptyState
+display = putStrLn . showGrid . divideIntoGroups emptyState
 
 newtype Group = Group Int deriving (Show, Eq, Ord, Ix)
 data State = State { association  :: Map (Int, Int) Group
@@ -66,7 +66,10 @@ divideIntoGroups state@(State { pos = (x, y), symbolsAt }) (_:rest)
 
 divideIntoGroups state [] = state
 
-accumGroups association = Set.fromList . concatMap (mapMaybe (association Map.!?) . neighbors)
+neighbouringGroups :: Map (Int, Int) Group -> [(Int, Int)] -> [Group]
+neighbouringGroups association = uniq . concatMap (mapMaybe (association !?) . neighbors)
+
+uniq = Set.toList . Set.fromList
 
 neighbors (x, y) = [
   (x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
@@ -78,10 +81,22 @@ neighbors (x, y) = [
 
 
 
+-- # =========== #
+-- # Debug stuff #
+-- # =========== #
 
+showGrid (State { association, pos = (width, height), symbolsAt }) =
+    gridToString
+  $ drawSymbols symbolsAt
+  $ drawGroups association
+  $ emptyGrid (width - 1) height
 
-displayGrid (State { association, pos = (width, height), symbolsAt }) = asString
-  where empty = listArray ((0, 0), (height, width - 1)) (repeat ' ')
-        grid = foldl (\arr ((x, y), Group id) -> arr // [((y, x), head $ show id)]) empty (Map.toList association)
-        withSymbols = foldl (\arr (x, y) -> arr // [((y, x), '*')]) grid symbolsAt
-        asString = unlines $ chunksOf width $ elems withSymbols
+drawGroups association
+  = (// [((y, x), head $ show group) | ((x, y), Group group) <- Map.toList association])
+
+drawSymbols symbolsAt = (// [((y, x), '*') | (x, y) <- symbolsAt])
+
+gridToString arr = unlines $ chunksOf width $ elems arr
+  where (_, (_, width)) = bounds arr
+
+emptyGrid width height = listArray ((0, 0), (height, width)) (repeat ' ')

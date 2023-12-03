@@ -1,16 +1,12 @@
 {-# LANGUAGE NamedFieldPuns #-}
-import           Data.Array
-import           Data.Char
-import           Data.List
-import           Data.List.Split
-import           Data.Map        (Map)
+import           Data.Array      (Ix, array, bounds, elems, listArray, (//))
+import           Data.Char       (isDigit)
+import           Data.List.Split (chunksOf)
+import           Data.Map        (Map, (!), (!?))
 import qualified Data.Map        as Map
-import           Data.Maybe
-import           Data.Ord
+import           Data.Maybe      (mapMaybe)
 import           Data.Set        (Set)
 import qualified Data.Set        as Set
-import           Debug.Trace
-import GHC.CmmToAsm.Config (NCGConfig(ncgCfgWeights))
 
 main = readFile "in" >>= print . process
 
@@ -28,8 +24,6 @@ test = "\
 
 process input = sum $ map (gearRatio groupToNum) $ filterGears association symbolsAt
   where State { association, symbolsAt, groupToNum } = divideIntoGroups emptyState input
-
-display = putStrLn . displayGrid . divideIntoGroups emptyState
 
 newtype Group = Group Int deriving (Show, Eq, Ord, Ix)
 data State = State { association  :: Map (Int, Int) Group
@@ -66,18 +60,15 @@ divideIntoGroups state@(State { pos = (x, y) }) (_:rest)
 
 divideIntoGroups state [] = state
 
-filterGears association 
-  = mapMaybe (asTuple . uniq . mapMaybe (association Map.!?) . neighbors)
+filterGears association
+  = mapMaybe (asTuple . uniq . mapMaybe (association !?) . neighbors)
 
 asTuple [a, b] = Just (a, b)
-asTuple _ = Nothing
+asTuple _      = Nothing
 
-uniq :: Ord a => [a] -> [a]
 uniq = Set.toList . Set.fromList
 
-gearRatio groupToNum (a, b) = groupToNum Map.! a * groupToNum Map.! b
-
-accumGroups association = uniq . concatMap (mapMaybe (association Map.!?) . neighbors)
+gearRatio groupToNum (a, b) = groupToNum ! a * groupToNum ! b
 
 neighbors (x, y) = [
   (x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
@@ -90,9 +81,24 @@ neighbors (x, y) = [
 
 
 
+-- # =========== #
+-- # Debug stuff #
+-- # =========== #
 
-displayGrid (State { association, pos = (width, height), symbolsAt }) = asString
-  where empty = listArray ((0, 0), (height, width - 1)) (repeat ' ')
-        grid = foldl (\arr ((x, y), Group id) -> arr // [((y, x), head $ show id)]) empty (Map.toList association)
-        withSymbols = foldl (\arr (x, y) -> arr // [((y, x), '*')]) grid symbolsAt
-        asString = unlines $ chunksOf width $ elems withSymbols
+display = putStrLn . showGrid . divideIntoGroups emptyState
+
+showGrid (State { association, pos = (width, height), symbolsAt }) =
+    gridToString
+  $ drawSymbols symbolsAt
+  $ drawGroups association
+  $ emptyGrid (width - 1) height
+
+drawGroups association
+  = (// [((y, x), head $ show group) | ((x, y), Group group) <- Map.toList association])
+
+drawSymbols symbolsAt = (// [((y, x), '*') | (x, y) <- symbolsAt])
+
+gridToString arr = unlines $ chunksOf width $ elems arr
+  where (_, (_, width)) = bounds arr
+
+emptyGrid width height = listArray ((0, 0), (height, width)) (repeat ' ')
