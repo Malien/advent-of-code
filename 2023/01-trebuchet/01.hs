@@ -1,6 +1,10 @@
 import           Data.Char (digitToInt, isDigit)
 
-test = "1abc2\npqr3stu8vwx\na1b2c3d4e5f\ntreb7uchet"
+test = "\
+\1abc2\n\
+\pqr3stu8vwx\n\
+\a1b2c3d4e5f\n\
+\treb7uchet"
 
 main = readFile "input.txt" >>= print . process
 
