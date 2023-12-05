@@ -1,14 +1,4 @@
-import           Data.Char
-import           Data.List       hiding (intersect)
-import           Data.List.Split
-import           Data.Map        (Map)
-import qualified Data.Map        as Map
-import           Data.Maybe
-import           Data.Ord
-import           Data.Set        (Set)
-import qualified Data.Set        as Set
-import           Debug.Trace
-import           Text.Regex.PCRE
+import           Data.List.Split (chunksOf, splitOn)
 
 main = readFile "in" >>= print . process
 
@@ -49,9 +39,6 @@ test = "\
 
 process inp = minimum $ map start $ foldl transformOnce (parseSeeds seeds) (map parseMap maps)
     where (seeds:maps) = splitOn "\n\n" inp
-
-pipeline seeds (mapping:mappings) = (seeds, "->", mapping) : pipeline (transformOnce seeds mapping) mappings
-pipeline seeds [] = [(seeds, "end", [])]
 
 data Mapping = Mapping { targetStart :: Int, sourceStart :: Int, mLen :: Int } deriving Show
 data SeedRange = SeedRange { start :: Int, sLen :: Int } deriving Show

@@ -1,15 +1,4 @@
-import           Data.List
-import           Data.List.Split
-import           Data.Ord
-import           Data.Char
-import           Data.Maybe
-import           Debug.Trace
-import           Text.Regex.PCRE
-import           Data.Array
-import           Data.Map        (Map)
-import qualified Data.Map        as Map
-import           Data.Set        (Set)
-import qualified Data.Set        as Set
+import           Data.List.Split (splitOn)
 
 main = readFile "in" >>= print . process
 
@@ -54,21 +43,15 @@ process inp = minimum $ transformAll (parseSeeds seeds) (map parseMap maps)
 data Mapping = Mapping { targetStart :: Int, sourceStart :: Int, len :: Int }
                        deriving (Show)
 
-parseSeeds :: String -> [Int]
 parseSeeds = map read . words . drop (length "seeds: ")
 
 parseMap = map (parseMapping . words) . tail . lines
 
 parseMapping [a,b,c] = Mapping (read a) (read b) (read c)
 
-transform seed m@(Mapping { sourceStart, targetStart, len }) 
-    | seed >= sourceStart && seed < sourceStart + len 
-        = traceShow (seed, m, seed - sourceStart + targetStart) seed - sourceStart + targetStart
-    | otherwise = traceShow (seed, m, seed) seed
-
 transformOnce seed [] = seed
 transformOnce seed (Mapping { sourceStart, targetStart, len }:rest)
-    | seed >= sourceStart && seed < sourceStart + len 
+    | seed >= sourceStart && seed < sourceStart + len
         = seed - sourceStart + targetStart
     | otherwise = transformOnce seed rest
 
