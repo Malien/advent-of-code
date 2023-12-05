@@ -10,9 +10,9 @@ test = "\
 \zoneight234\n\
 \7pqrstsixteen"
 
-main = readFile "input.txt" >>= print . process
+main = readFile "/Users/yaroslav/Downloads/input.txt" >>= putStr . process
 
-process = sum . map (getNum . extractDigits) . lines
+process = unlines . map (show . getNum . extractDigits) . lines
 
 getNum list = last list * 10 + head list
 
