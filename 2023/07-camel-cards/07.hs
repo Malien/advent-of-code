@@ -1,15 +1,7 @@
-import           Data.Array
-import           Data.Char
-import           Data.List
-import           Data.List.Split
-import           Data.Map        (Map)
-import qualified Data.Map        as Map
-import           Data.Maybe
-import           Data.Ord
-import           Data.Set        (Set)
-import qualified Data.Set        as Set
-import           Debug.Trace
-import           Text.Regex.PCRE
+import           Data.Array (Ix, accum, elems, listArray)
+import           Data.List  (findIndex, sortOn)
+import           Data.Maybe (fromJust)
+import           Data.Ord   (Down (Down))
 
 main = readFile "in" >>= print . process
 
@@ -20,7 +12,13 @@ test = "\
 \KTJJT 220 \n\
 \QQQJA 483"
 
-process = sum . zipWith (*) [1..] . map snd . sortOn fst . map parseBid . lines
+process = 
+      sum 
+    . zipWith (*) [1..] 
+    . map snd 
+    . sortOn fst 
+    . map parseBid 
+    . lines
 
 data Card =
     Ace | King | Queen | Jack | Ten | Nine | Eight | Seven | Six | Five | Four | Three | Two
@@ -89,7 +87,7 @@ twoPairs hand = case pairs of
     _      -> False
     where pairs = filter (==2) $ elems $ countCards hand
 
-onePair = elem 2 . elems . countCards 
+onePair = elem 2 . elems . countCards
 
 highCard _hand = True
 
@@ -100,5 +98,3 @@ rules :: [Hand -> Bool]
 rules = [fiveOfAKind, fourOfAKind, fullHouse, threeOfAKind, twoPairs, onePair, highCard]
 
 matchRules hand = fromJust $ findIndex (\rule -> rule hand) rules
-
-applyWinnings = zipWith (,) [1..]
