@@ -78,18 +78,7 @@ terminalSeq acc _ [] = acc
 
 cycleCycle prefixPath cyclePath = prefixPath ++ cycle cyclePath
 
--- offsetsFor dirs nodes node = prefixSeq ++ concat (iterate (map (+ length cycle)) cycleSeq)
-offsetsFor dirs nodes node = head cycleSeq
+offsetsFor dirs nodes node = terminalAt
     where (prefix, cycle) = getCycle node dirs nodes
-          prefixSeq = terminalSeq [] 0 prefix
-          cycleSeq = terminalSeq [] (length prefix) cycle
+          [terminalAt] = terminalSeq [] (length prefix) cycle
 
-advance :: Array Int [Int] -> Int
-advance values
-    | allTheSame $ elems column = head $ elems column
-    | otherwise = advance $ values // [(smallestIdx, tail $ values ! smallestIdx)]
-    where column = fmap head values
-          smallestIdx = fst $ minimumBy (comparing snd) $ assocs column
-
-allTheSame []     = True
-allTheSame (x:xs) = all (== x) xs
