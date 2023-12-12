@@ -1,2 +1,2 @@
 source ../.env
-curl -H 'Accept:application/json' -H Cookie:session=$AOC_SESSION https://adventofcode.com/2023/day/11/input > in
+curl -H 'Accept:application/json' -H Cookie:session=$AOC_SESSION https://adventofcode.com/2023/day/12/input > in
