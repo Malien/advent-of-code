@@ -1,7 +1,16 @@
-import           Data.Array      (assocs, bounds, elems, listArray, (!), (//))
+{-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
+import           Data.Array      (Array, Ix, assocs, bounds, elems, listArray,
+                                  (!), (//))
+import           Data.Hashable
 import           Data.List.Split (chunksOf)
-import           Data.Map        (Map)
 import qualified Data.Map        as Map
+import           GHC.Generics    (Generic)
 
 main = readFile "in" >>= print . process
 
@@ -55,17 +64,22 @@ cycle3 = "\
 
 target = 1_000_000_000
 
-process input = take 200 $ map score cycles
+process input = score $ cycles !! idxIntoCycle
     where cycles = iterate shiftCycle $ parseGrid input
           (cycleStart, cycleLength) = findCycle Map.empty $ zip [1..] cycles
-          idxIntoCycle = cycleStart + ((target - cycleStart) `mod` cycleLength) - 1
+          idxIntoCycle = cycleStart + ((target - cycleStart) `mod` cycleLength)
 
-findCycle visited ((idx, grid):rest) = case Map.lookup grid visited of
+findCycle visited ((idx, grid):rest) = case Map.lookup (hash grid) visited of
     Just prevIdx -> (prevIdx, idx - prevIdx)
-    Nothing      -> findCycle (Map.insert grid idx visited) rest
+    Nothing      -> findCycle (Map.insert (hash grid) idx visited) rest
 
 
-data Tile = Empty | RoundRock | SquareRock deriving (Eq, Ord)
+data Tile = Empty | RoundRock | SquareRock deriving (Eq, Ord, Generic)
+
+instance Hashable Tile
+
+instance (Hashable k, Hashable v, Ix k) => Hashable (Array k v) where
+    hashWithSalt salt arr = hashWithSalt salt $ elems arr
 
 instance Show Tile where
     show Empty      = "."
@@ -76,14 +90,14 @@ parseGrid input = listArray ((1,1), (width, height)) $ map parseTile $ filter (/
     where width = length $ head $ lines input
           height = length $ lines input
 
-score' anchor []                       = 0
-score' anchor ((y, Empty):column)      = score' anchor column
-score' anchor ((y, RoundRock):column)  = anchor + score' (anchor - 1) column
-score' anchor ((y, SquareRock):column) = score' (y - 1) column
+score grid = 
+    sum $
+    map fst $
+    filter ((== RoundRock) . snd) $
+    concatMap (zip [1..] . reverse) $
+    [ [grid ! (y, x) | y <- [1..height] ] | x <- [1..width] ]
+    where ((1, 1), (width, height)) = bounds grid
 
-colScore column = score' (length column) column
-
-score = sum . map colScore . columns
 
 columns grid = [ [(y, grid ! (y, x)) | y <- [1..height] ] | x <- [1..width] ]
     where ((1,1), (width, height)) = bounds grid
@@ -94,53 +108,31 @@ parseTile '.' = Empty
 parseTile 'O' = RoundRock
 parseTile '#' = SquareRock
 
-shiftNorth grid = rocklessGrid // [(coord, RoundRock) | coord <- roundRockPositions]
-    where rocklessGrid = grid // [(coord, Empty) | (coord, tile) <- assocs grid, tile == RoundRock]
-          roundRocksInCols = map shiftColNorth $ columns grid
-          roundRockPositions = concat $ zipWith (\x ys -> map (, x) ys) [1..] roundRocksInCols
-
-shiftColNorth = shiftColNorth' [] Nothing
-shiftColNorth' acc Nothing  ((y, Empty     ):column) = shiftColNorth' acc (Just y) column
-shiftColNorth' acc (Just x) ((y, Empty     ):column) = shiftColNorth' acc (Just x) column
-shiftColNorth' acc _        ((_, SquareRock):column) = shiftColNorth' acc Nothing column
-shiftColNorth' acc Nothing  ((y, RoundRock ):column) = shiftColNorth' (y:acc) Nothing column
-shiftColNorth' acc (Just x) ((y, RoundRock ):column) = shiftColNorth' (x:acc) (Just $ x + 1) column
-shiftColNorth' acc _ [] = acc
-
 showGrid grid = unlines $ chunksOf width $ concatMap show $ elems grid
     where (_, (width, _)) = bounds grid
 
-shiftColSouth = shiftColSouth' [] Nothing . reverse
-shiftColSouth' acc Nothing  ((y, Empty     ):column) = shiftColSouth' acc (Just y) column
-shiftColSouth' acc (Just x) ((y, Empty     ):column) = shiftColSouth' acc (Just x) column
-shiftColSouth' acc _        ((_, SquareRock):column) = shiftColSouth' acc Nothing column
-shiftColSouth' acc Nothing  ((y, RoundRock ):column) = shiftColSouth' (y:acc) Nothing column
-shiftColSouth' acc (Just x) ((y, RoundRock ):column) = shiftColSouth' (x:acc) (Just $ x - 1) column
-shiftColSouth' acc _ [] = acc
+shiftNeg = shiftNeg' [] Nothing . reverse
+shiftNeg' acc Nothing     ((x, Empty     ):column) = shiftNeg' acc        (Just x)          column
+shiftNeg' acc (Just prev) ((_, Empty     ):column) = shiftNeg' acc        (Just prev)       column
+shiftNeg' acc _           ((_, SquareRock):column) = shiftNeg' acc        Nothing           column
+shiftNeg' acc Nothing     ((x, RoundRock ):column) = shiftNeg' (x:acc)    Nothing           column
+shiftNeg' acc (Just prev) ((_, RoundRock ):column) = shiftNeg' (prev:acc) (Just $ prev - 1) column
+shiftNeg' acc _ [] = acc
 
-shiftRowEast = shiftColSouth' [] Nothing . reverse
-shiftRowEast' acc Nothing     ((x, Empty     ):column) = shiftRowEast' acc        (Just x)          column
-shiftRowEast' acc (Just prev) ((_, Empty     ):column) = shiftRowEast' acc        (Just prev)       column
-shiftRowEast' acc _           ((_, SquareRock):column) = shiftRowEast' acc        Nothing           column
-shiftRowEast' acc Nothing     ((x, RoundRock ):column) = shiftRowEast' (x:acc)    Nothing           column
-shiftRowEast' acc (Just prev) ((x, RoundRock ):column) = shiftRowEast' (prev:acc) (Just $ prev - 1) column
-shiftRowEast' acc _ [] = acc
-
-shiftRowWest = shiftRowWest' [] Nothing
-shiftRowWest' acc Nothing     ((x, Empty     ):column) = shiftRowWest' acc        (Just x)          column
-shiftRowWest' acc (Just prev) ((x, Empty     ):column) = shiftRowWest' acc        (Just prev)       column
-shiftRowWest' acc _           ((_, SquareRock):column) = shiftRowWest' acc        Nothing           column
-shiftRowWest' acc Nothing     ((x, RoundRock ):column) = shiftRowWest' (x:acc)    Nothing           column
-shiftRowWest' acc (Just prev) ((x, RoundRock ):column) = shiftRowWest' (prev:acc) (Just $ prev + 1) column
-shiftRowWest' acc _ [] = acc
-
+shiftPos = shiftPos' [] Nothing
+shiftPos' acc Nothing     ((x, Empty     ):xs) = shiftPos' acc        (Just x)          xs
+shiftPos' acc (Just prev) ((_, Empty     ):xs) = shiftPos' acc        (Just prev)       xs
+shiftPos' acc _           ((_, SquareRock):xs) = shiftPos' acc        Nothing           xs
+shiftPos' acc Nothing     ((x, RoundRock ):xs) = shiftPos' (x:acc)    Nothing           xs
+shiftPos' acc (Just prev) ((_, RoundRock ):xs) = shiftPos' (prev:acc) (Just $ prev + 1) xs
+shiftPos' acc _ [] = acc
 
 data Direction = North | East | South | West
 
-newPositionShifted North = concat . zipWith (\x ys -> map (, x) ys) [1..] . map shiftColNorth . columns
-newPositionShifted South = concat . zipWith (\x ys -> map (, x) ys) [1..] . map shiftColSouth . columns
-newPositionShifted East  = concat . zipWith (\y xs -> map (y, ) xs) [1..] . map shiftRowEast . rows
-newPositionShifted West  = concat . zipWith (\y xs -> map (y, ) xs) [1..] . map shiftRowWest . rows
+newPositionShifted North = concat . zipWith (\x ys -> map (, x) ys) [1..] . map shiftPos . columns
+newPositionShifted South = concat . zipWith (\x ys -> map (, x) ys) [1..] . map shiftNeg . columns
+newPositionShifted East  = concat . zipWith (\y xs -> map (y, ) xs) [1..] . map shiftNeg . rows
+newPositionShifted West  = concat . zipWith (\y xs -> map (y, ) xs) [1..] . map shiftPos . rows
 
 shift direction grid = rocklessGrid // map (, RoundRock) (newPositionShifted direction grid)
     where rocklessGrid = grid // [(coord, Empty) | (coord, tile) <- assocs grid, tile == RoundRock]
