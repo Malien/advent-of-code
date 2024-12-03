@@ -1,8 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-import           Data.Char
-import           Text.RawString.QQ
-import           Text.Regex.TDFA
+import           Text.RawString.QQ (r)
+import           Text.Regex.PCRE   ((=~))
 
 main = readFile "in" >>= print . process
 
@@ -10,13 +9,6 @@ test = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
 
 process = sum . map (uncurry (*)) . parse
 
-parse :: String -> [(Int, Int)]
-parse = 
-  map parseNum . 
-  getAllTextMatches .
-  (=~ [r|mul\([[:digit:]][[:digit:]]?[[:digit:]]?,[[:digit:]][[:digit:]]?[[:digit:]]?\)|])
+parse = map parseNum . (=~ [r|mul\((\d{1,3}),(\d{1,3})\)|])
 
-parseNum ('m':'u':'l':'(':xs) = (read a, read b)
-  where (a, ',':rest) = break (==',') xs
-        b = takeWhile isDigit rest
-
+parseNum [_, a, b] = (read a, read b)

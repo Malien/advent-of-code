@@ -1,7 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
-import           Data.Char
-import           Text.RawString.QQ
-import           Text.Regex.TDFA
+import           Text.RawString.QQ (r)
+import           Text.Regex.PCRE ((=~))
 
 main = readFile "in" >>= print . process
 
@@ -11,16 +10,14 @@ process = eval Enabled 0 . parse
 
 parse =
   map parseCommand .
-  getAllTextMatches .
-  (=~ [r|do\(\)|don't\(\)|mul\([[:digit:]][[:digit:]]?[[:digit:]]?,[[:digit:]][[:digit:]]?[[:digit:]]?\)|])
+  (=~ [r|do\(\)|don't\(\)|mul\((\d{1,3}),(\d{1,3})\)|])
 
 data Command = Mul Int Int | Do | Dont deriving Show
 
-parseCommand "do()" = Do
-parseCommand "don't()" = Dont
-parseCommand ('m':'u':'l':'(':xs) = Mul (read a) (read b)
-  where (a, ',':rest) = break (==',') xs
-        b = takeWhile isDigit rest
+parseCommand ["do()", "", ""] = Do
+parseCommand ["don't()", "", ""] = Dont
+parseCommand ['m':'u':'l':_, a, b] = Mul (read a) (read b)
+parseCommand x = error $ "parseCommand: " ++ show x
 
 data State = Enabled | Disabled
 
