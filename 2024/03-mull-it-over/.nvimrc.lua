@@ -1,4 +1,3 @@
----@param tab integer?
 local function find_terminal_chan_in_tab(tab)
   local windows = vim.api.nvim_tabpage_list_wins(tab or 0)
   for _, window in ipairs(windows) do
@@ -13,7 +12,6 @@ end
 
 local augroup = vim.api.nvim_create_augroup("AdventOfCode", { clear = true })
 
----@param opts {buffer: integer, channel: integer}
 local function reeval_on_write(opts)
   local autocmd_id
   autocmd_id = vim.api.nvim_create_autocmd("BufWritePost", {
