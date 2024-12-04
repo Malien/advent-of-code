@@ -17,7 +17,6 @@ data Command = Mul Int Int | Do | Dont deriving Show
 parseCommand ["do()", "", ""] = Do
 parseCommand ["don't()", "", ""] = Dont
 parseCommand ['m':'u':'l':_, a, b] = Mul (read a) (read b)
-parseCommand x = error $ "parseCommand: " ++ show x
 
 data State = Enabled | Disabled
 
