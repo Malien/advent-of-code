@@ -1,5 +1,7 @@
-import           Data.Set        (Set)
-import qualified Data.Set        as Set
+import           Data.Array (Ix (range))
+import           Data.List  (find)
+import           Data.Set   (Set)
+import qualified Data.Set   as Set
 
 main = readFile "in" >>= print . process
 
@@ -16,58 +18,55 @@ test = "\
 \......#...\n\
 \"
 
-process input = length $ filter ((== Looped) . modifiedWalk) $ possibleObstaclePositions obstacles bounds start
+process input = length $ filter hasCycleWithNewObstacle additionalObstacles
   where (bounds, obstacles, start) = parseGrid input
-        modifiedWalk newObstacle = walk Set.empty (Set.insert newObstacle obstacles) bounds start North
+        hasCycleWithNewObstacle obstacle = hasCycle Set.empty (Set.insert obstacle obstacles) bounds start North
+        firstWalk = walkPath Set.empty obstacles bounds start North
+        additionalObstacles
+          = filter (`Set.member` firstWalk) 
+          $ filter (`Set.notMember` obstacles) 
+          $ filter (/= start) 
+          $ range ((1, 1), bounds)
 
 data Direction = North | East | South | West deriving (Show, Eq, Ord)
 
 move (y, x) North = (y-1, x)
-move (y, x) East = (y, x+1)
+move (y, x) East  = (y, x+1)
 move (y, x) South = (y+1, x)
-move (y, x) West = (y, x-1)
+move (y, x) West  = (y, x-1)
 
 turnRight North = East
-turnRight East = South
+turnRight East  = South
 turnRight South = West
-turnRight West = North
+turnRight West  = North
 
-possibleObstaclePositions existingObstacles (height, width) (startY, startX) =
-  [ (idx `div` width, idx `mod` width)
-  | idx <- [0..height * width - 1]
-  , idx /= startY * width + startX
-  , (idx `div` width, idx `mod` width) `Set.notMember` existingObstacles
-  ]
-
-data Walk = Looped | Escaped deriving Eq
-
-walk visited obstacles bounds position direction
-  | not (withinBounds bounds position) = Escaped
-  | (direction, position) `Set.member` visited = Looped
-  | nextPosition `Set.member` obstacles = walk nextVisisted obstacles bounds position nextDirection
-  | otherwise = walk nextVisisted obstacles bounds nextPosition direction
+hasCycle visited obstacles bounds position direction
+  | not (withinBounds bounds position) = False
+  | (direction, position) `Set.member` visited = True
+  | nextPosition `Set.member` obstacles = hasCycle nextVisisted obstacles bounds position nextDirection
+  | otherwise = hasCycle nextVisisted obstacles bounds nextPosition direction
   where nextPosition = move position direction
         nextVisisted = Set.insert (direction, position) visited
         nextDirection = turnRight direction
 
-withinBounds (maxY, maxX) (y, x) = y >= 0 && x >= 0 && y < maxY && x < maxX
+walkPath visited obstacles bounds position direction
+  | not (withinBounds bounds position) = visited
+  | nextPosition `Set.member` obstacles = walkPath nextVisisted obstacles bounds position nextDirection
+  | otherwise = walkPath nextVisisted obstacles bounds nextPosition direction
+  where nextPosition = move position direction
+        nextVisisted = Set.insert position visited
+        nextDirection = turnRight direction
+
+
+withinBounds (maxY, maxX) (y, x) = y >= 1 && x >= 1 && y <= maxY && x <= maxX
 
 parseGrid input = (bounds, obstacles, startingPoint)
-  where indexed = zip [0..] (map (zip [0..]) $ lines input)
-        obstacles = foldr1 Set.union $ map (uncurry (parseRow Set.empty)) indexed
-        (Just startingPoint) = foldr1 combineMaybe $ map (uncurry findStartInRow) indexed
-        bounds = (length $ head $ lines input, length $ lines input)
+  where bounds = (length $ head $ lines input, length $ lines input)
+        withPositions = zip (range ((1, 1), bounds)) (filter (/= '\n') input)
+        obstacles = Set.fromList [pos | (pos, char) <- withPositions, char == '#']
+        (Just startingPoint) = fst <$> find ((== '^') . snd) withPositions
 
-parseRow acc y ((x,'.'):tail) = parseRow acc y tail
-parseRow acc y ((x,'^'):tail) = parseRow acc y tail
-parseRow acc y ((x,'#'):tail) = parseRow (Set.insert (y, x) acc) y tail
-parseRow acc _ [] = acc
-
-findStartInRow y ((x,'^'):tail) = Just (y, x)
-findStartInRow y (_:tail) = findStartInRow y tail
-findStartInRow _ [] = Nothing
 
 combineMaybe (Just a) _ = Just a
 combineMaybe _ (Just a) = Just a
-combineMaybe _ _ = Nothing
-
+combineMaybe _ _        = Nothing
