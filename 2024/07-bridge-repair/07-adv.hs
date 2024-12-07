@@ -22,6 +22,7 @@ parse line = (read $ init result, map read rest)
   where (result:rest) = words line
 
 eval1 target (x:xs) = eval x target xs
+eval acc target (x:xs) | acc > target = False
 eval acc target (x:xs) =
   eval (acc + x) target xs ||
   eval (acc * x) target xs ||
@@ -32,4 +33,4 @@ eval acc target [] = acc == target
 concatDigits a b | b < 10 = 10 * a + b
                  | b < 100 = 100 * a + b
                  | b < 1000 = 1000 * a + b
-                 | otherwise = 10 ^ ceiling (logBase 10 (fromIntegral b)) * a + b
+concatDigits a b = 10 ^ ceiling (logBase 10 (fromIntegral b)) * a + b
