@@ -13,6 +13,8 @@ chmod +x download.sh
 cp ../.nvimrc.lua .
 
 echo "\
+{-# LANGUAGE QuasiQuotes #-}
+
 import           Data.List
 import           Data.List.Split
 import           Data.Ord
@@ -25,10 +27,12 @@ import           Data.Map        (Map)
 import qualified Data.Map        as Map
 import           Data.Set        (Set)
 import qualified Data.Set        as Set
+import           Text.RawString.QQ (r)
 
 main = readFile \"in\" >>= print . process
 
-test = \"\"
+test = tail [r|
+|]
 
 process = lines
 " > $DIRNAME.hs
