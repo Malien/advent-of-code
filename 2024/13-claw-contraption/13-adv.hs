@@ -32,9 +32,9 @@ process = sum . map cost . mapMaybe (equasion . parse) . splitOn "\n\n"
 cost (a, b) = a * 3 + b
 
 data PrizeMachine = PrizeMachine {
-  buttonA :: (Integer, Integer),
-  buttonB :: (Integer, Integer),
-  prize   :: (Integer, Integer)
+  buttonA :: (Int, Int),
+  buttonB :: (Int, Int),
+  prize   :: (Int, Int)
 } deriving Show
 
 parse block = PrizeMachine {
