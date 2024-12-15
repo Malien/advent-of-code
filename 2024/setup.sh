@@ -1,9 +1,20 @@
-if [[ $1 -lt 10 ]]
+set -e
+
+if [[ $# -eq 0 ]]
 then
-  DIRNAME="0$1"
+  DAY=$(date +%-d)
 else
-  DIRNAME="$1"
+  DAY=$1
 fi
+
+if [[ $DAY -lt 10 ]]
+then
+  DIRNAME="0$DAY"
+  echo "Creating day $DAY in $DIRNAME"
+else
+  DIRNAME="$DAY"
+fi
+
 mkdir -p $DIRNAME
 cd $DIRNAME
 echo "source ../.env" > download.sh
